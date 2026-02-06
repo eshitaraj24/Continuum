@@ -1,48 +1,32 @@
 from fastapi import APIRouter
-from datetime import datetime, timedelta
-import random
-import uuid
-from app.services.risk_engine import compute_risk
+from ..data.store import get_patients, get_latest_checkin
 
 router = APIRouter()
 
-def uid():
-    return str(uuid.uuid4())
-
-PATIENTS = [
-    {"id": uid(), "name": "Sarah Johnson", "surgery": "Total Knee Replacement", "post_op_day": 3},
-    {"id": uid(), "name": "Robert Wilson", "surgery": "Hip Replacement", "post_op_day": 2},
-    {"id": uid(), "name": "Michael Chen", "surgery": "ACL Reconstruction", "post_op_day": 14},
-]
-
 @router.get("/triage")
 def get_triage_dashboard():
-    now = datetime.now()
     dashboard = []
 
-    for p in PATIENTS:
-        temp = random.choice([98.6, 99.5, 101.2, 102.4])
-        pain = random.choice([3, 5, 7, 9])
-        symptoms = {
-            "drainage": random.choice([False, True]),
-            "swelling": random.choice([False, True]),
-        }
-
-        risk, status, alerts = compute_risk(
-            temp, pain, symptoms, p["post_op_day"]
-        )
+    for p in get_patients():
+        c = get_latest_checkin(p["id"])
+        if not c:
+            continue
 
         dashboard.append({
             "patient_id": p["id"],
             "name": p["name"],
             "surgery": p["surgery"],
             "post_op_day": p["post_op_day"],
-            "last_checkin_minutes": random.randint(5, 180),
-            "temp_f": temp,
-            "pain": pain,
-            "risk": risk,
-            "status": status,
-            "alerts": alerts,
+            "last_checkin_minutes": c["last_checkin_minutes"],
+            "temp_f": c["temp_f"],
+            "pain": c["pain"],
+            "risk": c["risk"],
+            "status": c["status"],
+            "alerts": c["alerts"],
         })
+
+    # Sort: Critical first, then Monitor, then Stable; then by risk desc
+    rank = {"Critical": 0, "Monitor": 1, "Stable": 2}
+    dashboard.sort(key=lambda row: (rank.get(row["status"], 99), -row["risk"]))
 
     return dashboard

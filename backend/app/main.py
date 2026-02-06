@@ -1,7 +1,11 @@
 from fastapi import FastAPI
-from app.routes import triage
+from .routes import triage
+from .data.store import seed_dummy_data
 
 app = FastAPI(title="Continuum Clinician API")
+
+# Seed once when the server starts
+seed_dummy_data()
 
 app.include_router(triage.router)
 
