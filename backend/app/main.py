@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .routes import triage
 from .data.store import seed_dummy_data
-
+from .routes import patient
 app = FastAPI(title="Continuum Clinician API")
 
 # --- CORS (required for frontend on localhost:5173 - Vite default port) ---
@@ -20,6 +20,7 @@ seed_dummy_data()
 
 # --- Routes ---
 app.include_router(triage.router)
+app.include_router(patient.router)
 
 @app.get("/")
 def health():

@@ -71,6 +71,20 @@ def get_patients() -> List[Dict[str, Any]]:
     return PATIENTS
 
 
+def get_patient(patient_id: str):
+    for p in PATIENTS:
+        if p["id"] == patient_id:
+            return p
+    return None
+
+
 def get_latest_checkin(patient_id: str) -> Optional[Dict[str, Any]]:
     arr = CHECKINS_BY_PATIENT.get(patient_id, [])
-    return arr[0] if arr else None
+    return arr[-1] if arr else None
+
+
+def append_checkin(patient_id: str, checkin: Dict[str, Any]) -> None:
+    if patient_id not in CHECKINS_BY_PATIENT:
+        CHECKINS_BY_PATIENT[patient_id] = []
+    CHECKINS_BY_PATIENT[patient_id].append(checkin)
+
